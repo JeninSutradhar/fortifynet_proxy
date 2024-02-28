@@ -1,0 +1,11 @@
+[package]
+name = "fortifynet_proxy"
+version = "1.1.5"
+edition = "2021"
+license = "MIT"
+authors = ["FortifyNet"]
+description = "FortifyNet Proxy is a lightweight Rust proxy server designed to provide secure and efficient handling of HTTP requests with basic authentication and resource caching capabilities."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
