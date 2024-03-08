@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::thread;
 use std::sync::{Arc, Mutex};
 
+#[derive(Clone)]
 pub struct ProxyConfig {
     pub ip_address: String,
     pub port: u16,
@@ -13,82 +14,97 @@ pub struct ProxyConfig {
     pub cache_enabled: bool,
 }
 
-pub fn handle_client(mut stream: TcpStream) {
-    let mut buffer = [0; 1024];
-    stream.read(&mut buffer).unwrap();
-
-    // Proxy Login Implementation
-    if handle_authentication(&mut stream) {
-        handle_http_request(&mut stream);
+impl Default for ProxyConfig {
+    fn default() -> Self {
+        Self {
+            ip_address: "127.0.0.1".to_string(),
+            port: 8080,
+            authentication: false,
+            username: "".to_string(),
+            password: "".to_string(),
+            cache_enabled: true,
+        }
     }
 }
 
-// Function to handle proxy authentication
-pub fn handle_authentication(stream: &mut TcpStream) -> bool {
+pub fn handle_client(mut stream: TcpStream, config: &ProxyConfig) {
+    let mut buffer = [0; 1024];
+    if let Err(err) = stream.read(&mut buffer) {
+        eprintln!("Error reading from stream: {}", err);
+        return;
+    }
+
+    if config.authentication && !handle_authentication(&mut stream, &config) {
+        return;
+    }
+
+    if let Err(err) = handle_http_request(&mut stream) {
+        eprintln!("Error handling HTTP request: {}", err);
+    }
+}
+
+pub fn handle_authentication(stream: &mut TcpStream, config: &ProxyConfig) -> bool {
     let mut login_buffer = [0; 1024];
-    stream.read(&mut login_buffer).unwrap();
+    if let Err(err) = stream.read(&mut login_buffer) {
+        eprintln!("Error reading from stream: {}", err);
+        return false;
+    }
+
     let login_data = String::from_utf8_lossy(&login_buffer);
-    
-    if login_data.contains("username:password") {
+    if login_data.contains(&format!("{}:{}", config.username, config.password)) {
         log_activity("Successful login");
         true
     } else {
-        stream.write(b"HTTP/1.1 401 Unauthorized\r\n\r\n").unwrap();
-        stream.flush().unwrap();
+        if let Err(err) = stream.write(b"HTTP/1.1 401 Unauthorized\r\n\r\n") {
+            eprintln!("Error writing to stream: {}", err);
+        }
         log_activity("Failed login attempt");
         false
     }
 }
 
-// Function to handle HTTP requests
-pub fn handle_http_request(mut stream: &TcpStream) {
-    // Basic HTTP response
+pub fn handle_http_request(mut stream: &TcpStream) -> std::io::Result<()> {
     let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<html><body><h1>Hello, World!</h1></body></html>";
-    stream.write(response.as_bytes()).unwrap();
-    stream.flush().unwrap();
+    stream.write_all(response.as_bytes())?;
+    stream.flush()?;
+    Ok(())
 }
 
-// Function to log proxy server activities
 pub fn log_activity(activity: &str) {
     println!("{}", activity);
 }
 
 #[allow(unused)]
-// Function to cache frequently accessed resources
-pub fn cache_resources(resource: &str, cache: Arc<Mutex<HashMap<String, Vec<u8>>>>) {
-    let mut cache = cache.lock().unwrap();
-    // Simulate caching by storing the resource content
-    cache.insert(resource.to_string(), Vec::new()); // You need to implement actual caching logic
-}
-
-// Function to handle proxy server shutdown
-pub fn shutdown_proxy_server() {
-    // Placeholder for graceful shutdown logic
-    println!("Shutting down proxy server...");
-    // You can implement graceful shutdown logic here
-}
-
-#[allow(unused)]
 pub fn start_proxy_server(config: ProxyConfig) {
-    // Cache for frequently accessed resources
-    let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
+    let listener = match TcpListener::bind(format!("{}:{}", config.ip_address, config.port)) {
+        Ok(listener) => listener,
+        Err(err) => {
+            eprintln!("Error binding to address: {}", err);
+            return;
+        }
+    };
 
-    let listener = TcpListener::bind(format!("{}:{}", config.ip_address, config.port)).unwrap();
+    let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
                 let cache_clone = Arc::clone(&cache);
+                let config_clone = config.clone();
                 thread::spawn(move || {
-                    handle_client(stream);
+                    handle_client(stream, &config_clone);
                 });
             }
-            Err(e) => {
-                eprintln!("Error: {}", e);
+            Err(err) => {
+                eprintln!("Error accepting connection: {}", err);
             }
         }
     }
 
-    // Shutdown the proxy server gracefully when the loop ends
     shutdown_proxy_server();
+}
+
+pub fn shutdown_proxy_server() {
+    println!("Shutting down proxy server...");
+    // Add graceful shutdown logic here
 }

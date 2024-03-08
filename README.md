@@ -1,14 +1,17 @@
-# FortifyNet Proxy
+# FortifyNet Proxy: Secure and Efficient Rust Proxy Server
 
 FortifyNet Proxy is a lightweight Rust proxy server designed to provide secure and efficient handling of HTTP requests with basic authentication and resource caching capabilities.
 
+- **github clone repo -** - https://github.com/JeninSutradhar/fortifynet_proxy
+
 ## Features
 
-- **Proxy Authentication:** Securely authenticate users before allowing access to resources.
-- **HTTP Request Handling:** Efficiently handle HTTP requests and generate appropriate responses.
-- **Activity Logging:** Log proxy server activities for monitoring and troubleshooting.
-- **Resource Caching:** Cache frequently accessed resources to optimize performance.
-- **Graceful Shutdown:** Gracefully shutdown the proxy server to ensure data integrity and user experience.
+1. **Proxy Authentication:** Securely authenticate users before allowing access to resources.
+2. **HTTP Request Handling:** Efficiently handle HTTP requests and generate appropriate responses.
+3. **Activity Logging:** Log proxy server activities for monitoring and troubleshooting.
+4. **Resource Caching:** Cache frequently accessed resources to optimize performance.
+5. **Graceful Shutdown:** Gracefully shutdown the proxy server to ensure data integrity and user experience.
+
 
 ## Installation
 
@@ -16,31 +19,10 @@ To use FortifyNet Proxy in your Rust project, add the following line to your `Ca
 
 ```toml
 [dependencies]
-fortifynet_proxy = "1.1.5"
+fortifynet_proxy = "1.1.7"
 ```
 
 # Usage
-
-## Simple Use Case
-- To quickly set up the FortifyNet Proxy Server with default settings:
-
-1. Import the start_proxy_server function from the fortifynet_proxy crate.
-2. Call the start_proxy_server function without providing any configuration parameters.
-
-```rust
-use fortifynet_proxy::start_proxy_server;
-
-fn main() {
-    // Start the proxy server with default settings
-    start_proxy_server();
-}
-```
-In this usage scenario, the proxy server starts with default settings, including:
-- IP address: "127.0.0.1"
-- Port: 8080
-- No authentication required
-- No resource caching enabled
-
 
 ## Basic Usage
 To use the FortifyNet Proxy Server, follow these simple steps:
@@ -66,6 +48,13 @@ fn main() {
     start_proxy_server(config);
 }
 ```
+## Customization:
+FortifyNet Proxy offers extensive configuration options:
+
+- **IP Address and Port:** Specify the desired IP address and port for the server.
+- **Authentication:** Enable user authentication with custom usernames and passwords.
+- **Resource Caching:** Implement caching strategies to store frequently accessed resources and improve performance.
+
 
 # Advanced Usage
 
@@ -138,3 +127,6 @@ fn main() {
     server_thread.join().expect("Failed to join server thread");
 }
 ```
+
+# Further Resources:
+Project Repository: https://github.com/JeninSutradhar/fortifynet_proxy
