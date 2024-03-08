@@ -1,3 +1,5 @@
+// jeninsutradhar@gmail.com
+// Imports
 use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
@@ -14,6 +16,7 @@ pub struct ProxyConfig {
     pub cache_enabled: bool,
 }
 
+// Implementing Default for ProxyConfig
 impl Default for ProxyConfig {
     fn default() -> Self {
         Self {
@@ -43,6 +46,7 @@ pub fn handle_client(mut stream: TcpStream, config: &ProxyConfig) {
     }
 }
 
+// Authentication Handling
 pub fn handle_authentication(stream: &mut TcpStream, config: &ProxyConfig) -> bool {
     let mut login_buffer = [0; 1024];
     if let Err(err) = stream.read(&mut login_buffer) {
@@ -63,6 +67,7 @@ pub fn handle_authentication(stream: &mut TcpStream, config: &ProxyConfig) -> bo
     }
 }
 
+// Handling HTTP request
 pub fn handle_http_request(mut stream: &TcpStream) -> std::io::Result<()> {
     let response = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n<html><body><h1>Hello, World!</h1></body></html>";
     stream.write_all(response.as_bytes())?;
@@ -75,6 +80,7 @@ pub fn log_activity(activity: &str) {
 }
 
 #[allow(unused)]
+// Start Server
 pub fn start_proxy_server(config: ProxyConfig) {
     let listener = match TcpListener::bind(format!("{}:{}", config.ip_address, config.port)) {
         Ok(listener) => listener,
@@ -83,9 +89,11 @@ pub fn start_proxy_server(config: ProxyConfig) {
             return;
         }
     };
-
+    
+    // Collect
     let cache: Arc<Mutex<HashMap<String, Vec<u8>>>> = Arc::new(Mutex::new(HashMap::new()));
 
+    // #[derive(Clone)] used for .clone in config_clone
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
@@ -101,10 +109,11 @@ pub fn start_proxy_server(config: ProxyConfig) {
         }
     }
 
+    // Shutdown Server
     shutdown_proxy_server();
 }
 
 pub fn shutdown_proxy_server() {
     println!("Shutting down proxy server...");
-    // Add graceful shutdown logic here
+    // You can add more graceful shutdown logic here
 }
