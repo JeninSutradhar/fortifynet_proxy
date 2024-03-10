@@ -3,6 +3,7 @@
 FortifyNet Proxy is a lightweight Rust proxy server designed to provide secure and efficient handling of HTTP requests with basic authentication and resource caching capabilities.
 
 - **github clone repo -** - https://github.com/JeninSutradhar/fortifynet_proxy
+- Project Crate: https://crates.io/crates/fortifynet_proxy
 
 ## Features
 
@@ -129,4 +130,4 @@ fn main() {
 ```
 
 # Further Resources:
-Project Repository: https://github.com/JeninSutradhar/fortifynet_proxy
+Project Crate: https://crates.io/crates/fortifynet_proxy
