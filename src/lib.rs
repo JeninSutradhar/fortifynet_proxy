@@ -1,5 +1,6 @@
 // jeninsutradhar@gmail.com
-// Imports
+// https://github.com/JeninSutradhar/fortifynet_proxy
+
 use std::collections::HashMap;
 use std::net::{TcpListener, TcpStream};
 use std::io::{Read, Write};
@@ -30,23 +31,41 @@ impl Default for ProxyConfig {
     }
 }
 
+/// Handles an incoming client connection by reading the request and
+/// sending a response.
+///
+/// # Arguments
+/// * `stream` - The client's TCP stream
+/// * `config` - The proxy server's configuration
 pub fn handle_client(mut stream: TcpStream, config: &ProxyConfig) {
     let mut buffer = [0; 1024];
+    // Read from the stream
     if let Err(err) = stream.read(&mut buffer) {
         eprintln!("Error reading from stream: {}", err);
         return;
     }
 
+    // Handle authentication if it's enabled
     if config.authentication && !handle_authentication(&mut stream, &config) {
         return;
     }
 
+    // Handle the HTTP request
     if let Err(err) = handle_http_request(&mut stream) {
         eprintln!("Error handling HTTP request: {}", err);
     }
 }
 
+
 // Authentication Handling
+/// Handles authentication for incoming client connections.
+///
+/// # Arguments
+/// * `stream` - The client's TCP stream
+/// * `config` - The proxy server's configuration
+///
+/// # Returns
+/// A boolean indicating whether the authentication was successful
 pub fn handle_authentication(stream: &mut TcpStream, config: &ProxyConfig) -> bool {
     let mut login_buffer = [0; 1024];
     if let Err(err) = stream.read(&mut login_buffer) {
@@ -66,6 +85,7 @@ pub fn handle_authentication(stream: &mut TcpStream, config: &ProxyConfig) -> bo
         false
     }
 }
+
 
 // Handling HTTP request
 pub fn handle_http_request(mut stream: &TcpStream) -> std::io::Result<()> {
@@ -115,5 +135,10 @@ pub fn start_proxy_server(config: ProxyConfig) {
 
 pub fn shutdown_proxy_server() {
     println!("Shutting down proxy server...");
-    // You can add more graceful shutdown logic here
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        std::process::exit(0);
+    });
 }
+
+
