@@ -2,15 +2,15 @@
 
 FortifyNet Proxy is a lightweight Rust proxy server designed to provide secure and efficient handling of HTTP requests with basic authentication and resource caching capabilities.
 
-- **github clone repo -** `git clone https://github.com/JeninSutradhar/fortifynet_proxy`
+- **github clone repo -** - `git clone https://github.com/JeninSutradhar/fortifynet_proxy`
 - Project Crate: https://crates.io/crates/fortifynet_proxy
 
 ## Features
 
 1. **Proxy Authentication:** Securely authenticate users before allowing access to resources.
-2. **HTTP Request Handling:** Efficiently handle HTTP requests and generate appropriate responses.
+2. **HTTP Request Forwarding**: Forwards incoming HTTP requests to target servers and relays the responses back to the clients.
 3. **Activity Logging:** Log proxy server activities for monitoring and troubleshooting.
-4. **Resource Caching:** Cache frequently accessed resources to optimize performance.
+4. **Caching**: Caches responses for repeated requests to reduce load on target servers and improve response times.
 5. **Graceful Shutdown:** Gracefully shutdown the proxy server to ensure data integrity and user experience.
 
 
@@ -20,7 +20,7 @@ To use FortifyNet Proxy in your Rust project, add the following line to your `Ca
 
 ```toml
 [dependencies]
-fortifynet_proxy = "1.1.7"
+fortifynet_proxy = "1.1.9"
 ```
 
 # Usage
@@ -32,21 +32,22 @@ To use the FortifyNet Proxy Server, follow these simple steps:
 - Start the proxy server using the start_proxy_server function with the provided configuration.
 
 ```rust
-use fortifynet_proxy::{ProxyConfig, start_proxy_server};
+use fortifynet_proxy::{start_proxy_server, ProxyConfig};
 
 fn main() {
-    // Define proxy server configuration
+    
+    // Create a proxy configuration with default values
     let config = ProxyConfig {
         ip_address: "127.0.0.1".to_string(),
         port: 8080,
-        authentication: true,
+        authentication: false,
         username: "admin".to_string(),
-        password: "password123".to_string(),
-        cache_enabled: true,
+        password: "password".to_string(),
+        cache_enabled: true, // Disable for Faster Execution
     };
 
     // Start the proxy server with the provided configuration
-    start_proxy_server(config);
+    start_proxy_server(&config);
 }
 ```
 ## Customization:
@@ -103,31 +104,74 @@ fn main() {
 }
 ```
 
-## Graceful Shutdown Handling
-Gracefully shutdown the proxy server to ensure ongoing connections are completed.
+## Logging Implementation:
+Modify the handle_http_request function to add logging:
 
 ```rust
-use fortifynet_proxy::{ProxyConfig, start_proxy_server};
+pub fn handle_http_request(stream: &mut TcpStream, config: &ProxyConfig, cache: Arc<Mutex<HashMap<String, Vec<u8>>>>) -> std::io::Result<()> {
+    let mut buffer = [0; 1024];
+    stream.read(&mut buffer)?;
 
-fn main() {
-    // Configure proxy server
-    let config = ProxyConfig {
-        ip_address: "127.0.0.1".to_string(),
-        port: 8080,
-        authentication: false,
-        username: "".to_string(),
-        password: "".to_string(),
-        cache_enabled: true,
+    let request_str = String::from_utf8_lossy(&buffer);
+    log_activity(&format!("Incoming request: {}", request_str));
+
+    let request_lines: Vec<&str> = request_str.lines().collect();
+    if request_lines.is_empty() {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid HTTP request"));
+    }
+
+    let first_line = request_lines[0];
+    let request_parts: Vec<&str> = first_line.split_whitespace().collect();
+    if request_parts.len() != 3 {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid HTTP request line"));
+    }
+
+    let method = request_parts[0];
+    let url = request_parts[1];
+    let version = request_parts[2];
+
+    let host = if let Some(host_line) = request_lines.iter().find(|&&line| line.starts_with("Host:")) {
+        host_line.split_whitespace().nth(1).unwrap_or("")
+    } else {
+        return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "No Host header found"));
     };
 
-    // Start the proxy server
-    let server_thread = start_proxy_server(config);
+    if config.cache_enabled {
+        let cache = cache.lock().unwrap();
+        if let Some(response) = cache.get(url) {
+            log_activity(&format!("Serving from cache: {}", url));
+            stream.write_all(response)?;
+            stream.flush()?;
+            return Ok(());
+        }
+    }
 
-    // Gracefully shutdown the server after a specified time
-    std::thread::sleep(std::time::Duration::from_secs(10));
-    server_thread.join().expect("Failed to join server thread");
+    let target_address = format!("{}:80", host);
+    let mut target_stream = TcpStream::connect(target_address)?;
+
+    target_stream.write_all(buffer)?;
+    target_stream.flush()?;
+
+    let mut response_buffer = Vec::new();
+    target_stream.read_to_end(&mut response_buffer)?;
+
+    if config.cache_enabled {
+        let mut cache = cache.lock().unwrap();
+        cache.insert(url.to_string(), response_buffer.clone());
+    }
+
+    log_activity(&format!("Outgoing response: {:?}", response_buffer));
+    stream.write_all(&response_buffer)?;
+    stream.flush()?;
+    Ok(())
+}
+
+pub fn log_activity(activity: &str) {
+    println!("{}", activity);
 }
 ```
 
 # Further Resources:
-Project Crate: https://crates.io/crates/fortifynet_proxy
+- Project Crate: https://crates.io/crates/fortifynet_proxy
+- Github: https://github.com/JeninSutradhar/fortifynet_proxy
+- Github official: https://github.com/JeninSutradhar/

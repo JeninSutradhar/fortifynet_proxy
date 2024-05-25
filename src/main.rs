@@ -1,20 +1,22 @@
 // BASIC USAGE 
-// Note it is the main file adjust USE statement if you are using API
+// Note this is the main file[if you are using the source code directly]
+// ! adjust USE statement if you are using API
 
-use fortifynet_proxy::{ProxyConfig, start_proxy_server};
+// mod lib;
+use fortifynet_proxy::{start_proxy_server, ProxyConfig};
 
 fn main() {
     
-    // Define proxy server configuration
-    let my_config = ProxyConfig {
+    // Create a proxy configuration with default values
+    let config = ProxyConfig {
         ip_address: "127.0.0.1".to_string(),
         port: 8080,
-        authentication: true,
+        authentication: false,
         username: "admin".to_string(),
-        password: "password123".to_string(),
-        cache_enabled: true, // Remove for faster Execution
+        password: "password".to_string(),
+        cache_enabled: true, // Disable for Faster Execution
     };
 
     // Start the proxy server with the provided configuration
-    start_proxy_server(my_config);
+    start_proxy_server(&config);
 }
