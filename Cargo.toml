@@ -1,12 +1,26 @@
 [package]
 name = "fortifynet_proxy"
-version = "1.1.9"
+version = "2.0.0"
 edition = "2021"
 license = "MIT"
-authors = ["FortifyNet"]
-description = "FortifyNet Proxy is a lightweight Rust proxy server designed to provide secure and efficient handling of HTTP requests with basic authentication and resource caching capabilities."
+authors = ["Jenin Sutradhar"]
+description = "A flexible asynchronous proxy server library written in Rust."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# url = "2.1.1"
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "0.14", features = ["client","http1","server","tcp"] }
+log = "0.4"
+env_logger = "0.10"
+thiserror = "1"
+anyhow = "1"
+rustls = "0.21"
+tokio-rustls = "0.24"
+tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
+warp = "0.3"
+futures = "0.3"
+url = "2.5"
+# socks5-impl = "0.6.0"
+rustls-pemfile = "0.2"
+tokio-socks = "0.5.2"
