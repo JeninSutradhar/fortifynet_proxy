@@ -207,6 +207,7 @@ The `ProxyConfig` struct offers several configuration options, allowing you to c
 *   `target_address`: Sets the target address for direct connections.
 
 ## Real-Time Metrics and Monitoring
+![image](https://github.com/user-attachments/assets/83b04616-8d94-45cf-96be-7a57a1665480)
 
 *   **Live Metrics**: Access the dashboard at `http://127.0.0.1:<port + 1000>` in your browser to view real-time metrics about the proxy server, including total requests, average response times, cache hit/miss rates, and error counts.
 *   **Console Logs**: Check the console output where the proxy server is running for detailed logs of incoming connections, requests, responses, and any errors encountered.
